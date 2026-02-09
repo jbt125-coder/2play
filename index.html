@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2 Player Room Game</title>
+<style>
+body{
+  font-family:arial;
+  text-align:center;
+  background:#111;
+  color:white;
+}
+button{
+  font-size:20px;
+  padding:15px;
+  margin:10px;
+}
+#score{
+  font-size:28px;
+  margin:20px;
+}
+</style>
+</head>
+<body>
+
+<h1>2 Player Battle</h1>
+
+<button onclick="createRoom()">Create Room</button>
+<button onclick="joinRoom()">Join Room</button>
+
+<div id="score">
+You: <span id="me">0</span> |
+Enemy: <span id="enemy">0</span>
+</div>
+
+<button onclick="tap()">TAP!</button>
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script>
+let peer;
+let conn;
+let myScore = 0;
+let enemyScore = 0;
+
+function createRoom(){
+  peer = new Peer();
+  peer.on('open', id=>{
+    alert("Room ID: " + id);
+  });
+
+  peer.on('connection', connection=>{
+    conn = connection;
+    setupConnection();
+  });
+}
+
+function joinRoom(){
+  let id = prompt("Enter Room ID:");
+  peer = new Peer();
+  conn = peer.connect(id);
+  conn.on('open', setupConnection);
+}
+
+function setupConnection(){
+  conn.on('data', data=>{
+    enemyScore = data;
+    document.getElementById("enemy").innerText = enemyScore;
+
+    if(enemyScore >= 20){
+      alert("You Lose!");
+    }
+  });
+}
+
+function tap(){
+  myScore++;
+  document.getElementById("me").innerText = myScore;
+  if(conn) conn.send(myScore);
+
+  if(myScore >= 20){
+    alert("You Win!");
+  }
+}
+</script>
+
+</body>
+</html>
