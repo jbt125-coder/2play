@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2 Player Room Game</title>
+<title>2 Player Battle</title>
 <style>
 body{
   font-family:arial;
@@ -19,6 +19,11 @@ button{
   font-size:28px;
   margin:20px;
 }
+#roomCode{
+  font-size:24px;
+  color:yellow;
+  margin:10px;
+}
 </style>
 </head>
 <body>
@@ -27,6 +32,8 @@ button{
 
 <button onclick="createRoom()">Create Room</button>
 <button onclick="joinRoom()">Join Room</button>
+
+<div id="roomCode"></div>
 
 <div id="score">
 You: <span id="me">0</span> |
@@ -42,10 +49,36 @@ let conn;
 let myScore = 0;
 let enemyScore = 0;
 
+// memory for codes
+const codeMap = {};
+
+function randomLetters(){
+  let letters = "abcdefghijklmnopqrstuvwxyz";
+  let out = "";
+  for(let i=0;i<4;i++){
+    out += letters[Math.floor(Math.random()*letters.length)];
+  }
+  return out;
+}
+
+function randomNumbers(){
+  return Math.floor(1000 + Math.random()*9000);
+}
+
+function generateCode(){
+  return randomLetters() + "-" + randomNumbers();
+}
+
 function createRoom(){
   peer = new Peer();
+
   peer.on('open', id=>{
-    alert("Room ID: " + id);
+    let code = generateCode();
+    codeMap[code] = id;   // store mapping locally
+    document.getElementById("roomCode").innerText = "Room Code: " + code;
+
+    // save mapping so another browser can find it
+    localStorage.setItem(code, id);
   });
 
   peer.on('connection', connection=>{
@@ -55,7 +88,14 @@ function createRoom(){
 }
 
 function joinRoom(){
-  let id = prompt("Enter Room ID:");
+  let code = prompt("Enter Room Code (abcd-1234):");
+  let id = localStorage.getItem(code);
+
+  if(!id){
+    alert("Room not found!");
+    return;
+  }
+
   peer = new Peer();
   conn = peer.connect(id);
   conn.on('open', setupConnection);
